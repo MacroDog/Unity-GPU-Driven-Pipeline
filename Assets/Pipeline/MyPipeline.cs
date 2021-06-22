@@ -60,8 +60,9 @@ public class MyPipeline : RenderPipeline
         var clearcolor = ((int)clearFlags & (int)CameraClearFlags.Color) == 1;
         camera_buffer.ClearRenderTarget(cleardathp, clearcolor, camera.backgroundColor);
         camera_buffer.BeginSample("Render Camera");
-        camera_buffer.SetGlobalVectorArray(visibleLightColorId,visibleLightColors);
-        camera_buffer.SetGlobalVectorArray(visibleLightDirectionsID,visibleLightDirections);
+        ConfigureLights();
+        camera_buffer.SetGlobalVectorArray(visibleLightColorId, visibleLightColors);
+        camera_buffer.SetGlobalVectorArray(visibleLightDirectionsID, visibleLightDirections);
         context.ExecuteCommandBuffer(camera_buffer);
         camera_buffer.Clear();
         var filterSetting = new FilterRenderersSettings(true);
@@ -78,7 +79,6 @@ public class MyPipeline : RenderPipeline
         camera_buffer.EndSample("Render Camera");
         context.ExecuteCommandBuffer(camera_buffer);
         camera_buffer.Clear();
-
         context.Submit();
     }
 
@@ -86,16 +86,28 @@ public class MyPipeline : RenderPipeline
     {
         for (int i = 0; i < cull.visibleLights.Count; i++)
         {
-            if (i == maxVisibleLight) {
-				break;
-			}
+            if (i == maxVisibleLight)
+            {
+                break;
+            }
             VisibleLight light = cull.visibleLights[i];
             visibleLightColors[i] = light.finalColor;
-            var v =  light.localToWorld.GetColumn(2);
-            v.x = -v.x;
-            v.y = -v.y;
-            v.z = -v.z;
-            visibleLightDirections[i] = v;
+            if (light.light.type == LightType.Directional)
+            {
+                var v = light.localToWorld.GetColumn(2);
+                v.x = -v.x;
+                v.y = -v.y;
+                v.z = -v.z;
+                v.w = 0;
+                visibleLightDirections[i] = v;
+            }
+            else
+            {
+                visibleLightDirections[i] =
+                    light.localToWorld.GetColumn(3);
+                visibleLightDirections[i].z = 1;
+            }
+
         }
     }
 
