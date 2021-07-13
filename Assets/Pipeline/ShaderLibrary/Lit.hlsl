@@ -1,23 +1,13 @@
 ﻿#ifndef MYRP_LIT_INCLUDED
 #define MYRP_LIT_INCLUDED
 #include "../ShaderLibrary/Common.hlsl"
-
-CBUFFER_START(UnityPerFrame)
-	float4x4 unity_MatrixVP;
-CBUFFER_END
-
-CBUFFER_START(UnityPerDraw)
-	float4x4 unity_ObjectToWorld;
-CBUFFER_END
-
 CBUFFER_START(UnityPerMaterial)
 float4 _BaseMap_ST;
 CBUFFER_END
-#define UNITY_MATRIX_M unity_ObjectToWorld
 
-UNITY_INSTANCING_BUFFER_START(Props)
+UNITY_INSTANCING_BUFFER_START(UnityPerMaterial)
 	UNITY_DEFINE_INSTANCED_PROP(float4 , _Color)
-UNITY_INSTANCING_BUFFER_END(Props)
+UNITY_INSTANCING_BUFFER_END(UnityPerMaterial)
 
 struct VertexInput {
 	float4 pos 			: POSITION;
@@ -41,7 +31,7 @@ VertexOutput LitPassVertex (VertexInput i)
 	UNITY_SETUP_INSTANCE_ID(i);
     UNITY_TRANSFER_INSTANCE_ID(i, o);
 	float4 worldPos = mul(UNITY_MATRIX_M, float4(i.pos.xyz, 1.0));
-	o.pos = mul(unity_MatrixVP, worldPos);
+	o.pos = mul(UNITY_MATRIX_VP, worldPos);
 	o.worldpos = worldPos.xyz;
 	o.normal = mul((float3x3)UNITY_MATRIX_M, i.normal);
 	o.uv = TRANSFORM_TEX(i.texcoord,_BaseMap);
